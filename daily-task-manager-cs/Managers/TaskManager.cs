@@ -50,7 +50,7 @@ namespace daily_task_manager_cs.Managers
                 Console.Clear();
                 Console.WriteLine("===================================");
                 Console.WriteLine("TASK MANAGER");
-                Console.WriteLine($"Welcome, {currentUser.Username}!\n");
+                Console.WriteLine($"Welcome, {currentUser.Username}!");
                 Console.WriteLine("===================================");
                 Console.WriteLine("1. Add a new task");
                 Console.WriteLine("2. Remove a task");
@@ -437,7 +437,7 @@ namespace daily_task_manager_cs.Managers
         private void ExitApplication()
         {
             Console.Clear();
-            Console.WriteLine("Are you sure you want to exit? (y/n): ");
+            Console.WriteLine("Are you sure you want to exit? (Y/N): ");
             string response = Console.ReadLine()?.Trim().ToLower();
 
             if (response == "y" || response == "yes")

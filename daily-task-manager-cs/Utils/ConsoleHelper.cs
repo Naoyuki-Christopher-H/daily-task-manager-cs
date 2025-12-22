@@ -89,7 +89,7 @@ namespace daily_task_manager_cs.Utils
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Invalid date format. Please use yyyy-MM-dd format (e.g., 2024-12-31).");
+                    Console.WriteLine("Invalid date format. Please use YYYY-MM-DD format (e.g., 2024-12-31).");
                     Console.ResetColor();
                 }
             }
