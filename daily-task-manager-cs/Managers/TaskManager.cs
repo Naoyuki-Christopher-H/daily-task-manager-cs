@@ -48,7 +48,10 @@ namespace daily_task_manager_cs.Managers
             while (true)
             {
                 Console.Clear();
-                Console.WriteLine($"=== TASK MANAGER === Welcome, {currentUser.Username}!\n");
+                Console.WriteLine("===================================");
+                Console.WriteLine("TASK MANAGER");
+                Console.WriteLine($"Welcome, {currentUser.Username}!\n");
+                Console.WriteLine("===================================");
                 Console.WriteLine("1. Add a new task");
                 Console.WriteLine("2. Remove a task");
                 Console.WriteLine("3. Mark a task as complete");
@@ -101,13 +104,15 @@ namespace daily_task_manager_cs.Managers
         private void AddTask()
         {
             Console.Clear();
-            Console.WriteLine("=== ADD NEW TASK ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("ADD NEW TASK");
+            Console.WriteLine("===================================\n");
 
             // Get task title
             string title = ConsoleHelper.GetStringInput("Enter task title: ");
 
             // Get due date (optional)
-            DateTime? dueDate = ConsoleHelper.GetDateInput("Enter due date (yyyy-MM-dd) or press Enter to skip: ");
+            DateTime? dueDate = ConsoleHelper.GetDateInput("Enter due date (YYYY-MM-DD) OR press Enter to skip: ");
 
             // Get priority
             Priority priority = ConsoleHelper.GetPriorityInput();
@@ -145,7 +150,9 @@ namespace daily_task_manager_cs.Managers
             }
 
             Console.Clear();
-            Console.WriteLine("=== REMOVE TASK ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("REMOVE TASK");
+            Console.WriteLine("===================================\n");
             ListTasksSimple();
 
             int taskId = ConsoleHelper.GetIntInput("\nEnter task ID to remove: ", 1);
@@ -181,7 +188,9 @@ namespace daily_task_manager_cs.Managers
             }
 
             Console.Clear();
-            Console.WriteLine("=== MARK TASK COMPLETE ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("MARK TASK COMPLETE");
+            Console.WriteLine("===================================\n");
             ListTasksSimple();
 
             int taskId = ConsoleHelper.GetIntInput("\nEnter task ID to mark as complete: ", 1);
@@ -261,7 +270,9 @@ namespace daily_task_manager_cs.Managers
             int completedTasks = currentUser.Tasks.Count(t => t.IsComplete);
             int pendingTasks = totalTasks - completedTasks;
 
-            Console.WriteLine($"\n=== STATISTICS ===");
+            Console.WriteLine("\n===================================");
+            Console.WriteLine($"STATISTICS");
+            Console.WriteLine("===================================");
             Console.WriteLine($"Total tasks: {totalTasks}");
             Console.WriteLine($"Completed: {completedTasks}");
             Console.WriteLine($"Pending: {pendingTasks}");
@@ -302,7 +313,9 @@ namespace daily_task_manager_cs.Managers
             }
 
             Console.Clear();
-            Console.WriteLine("=== EDIT TASK ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("EDIT TASK");
+            Console.WriteLine("===================================\n");
             ListTasksSimple();
 
             int taskId = ConsoleHelper.GetIntInput("\nEnter task ID to edit: ", 1);
@@ -379,7 +392,9 @@ namespace daily_task_manager_cs.Managers
             }
 
             Console.Clear();
-            Console.WriteLine("=== SEARCH TASKS ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("SEARCH TASKS");
+            Console.WriteLine("===================================\n");
 
             string searchTerm = ConsoleHelper.GetStringInput("Enter search term: ", true);
 

@@ -45,7 +45,9 @@ namespace daily_task_manager_cs.Managers
         public bool ShowAuthMenu()
         {
             Console.Clear();
-            Console.WriteLine("=== AUTHENTICATION ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("AUTHENTICATION");
+            Console.WriteLine("===================================\n");
             Console.WriteLine("1. Create new account");
             Console.WriteLine("2. Login to existing account");
             Console.WriteLine("3. Exit application");
@@ -77,7 +79,9 @@ namespace daily_task_manager_cs.Managers
         private bool RegisterUser()
         {
             Console.Clear();
-            Console.WriteLine("=== CREATE NEW ACCOUNT ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("CREATE NEW ACCOUNT");
+            Console.WriteLine("===================================\n");
 
             // Get username
             string username = ConsoleHelper.GetStringInput("Enter username: ");
@@ -134,7 +138,9 @@ namespace daily_task_manager_cs.Managers
         private bool LoginUser()
         {
             Console.Clear();
-            Console.WriteLine("=== LOGIN ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("LOGIN");
+            Console.WriteLine("===================================");
 
             // Get username
             string username = ConsoleHelper.GetStringInput("Username: ");

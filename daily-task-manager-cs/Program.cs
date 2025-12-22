@@ -122,10 +122,13 @@ namespace daily_task_manager_cs
         {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("=== FATAL ERROR ===");
+            Console.WriteLine("===================================");
+            Console.WriteLine("FATAL ERROR");
+            Console.WriteLine("===================================");
             Console.WriteLine($"A fatal error occurred and the application must close.");
             Console.WriteLine($"Error details: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Console.WriteLine("===================================");
             Console.ResetColor();
             Console.WriteLine("\nPress any key to exit...");
             Console.ReadKey();
