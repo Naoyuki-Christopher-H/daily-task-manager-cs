@@ -600,9 +600,7 @@ If all else fails:
 
 ## 13. License
 
-This project is provided for educational and demonstration purposes. Users are free to use, 
-modify, and distribute the code for personal and educational use. For commercial use, please 
-contact the repository owner.
+MIT license
 
 ## 14. Support and Contact
 
