@@ -1,6 +1,7 @@
 ﻿using daily_task_manager_cs.Models;
 using daily_task_manager_cs.Utils;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -35,14 +36,13 @@ namespace daily_task_manager_cs.Managers
                 // Read JSON from file
                 string jsonData = File.ReadAllText(DataFilePath, Encoding.UTF8);
 
-                // In a full implementation, you would use Newtonsoft.Json or System.Text.Json
-                // For C# 4.7.2, we'll use a simple custom parser for this example
-                // Note: For production, use a proper JSON library like Newtonsoft.Json
+                // Parse JSON data
                 return ParseJsonData(jsonData);
             }
             catch (Exception ex)
             {
                 ConsoleHelper.DisplayError($"Failed to load data: {ex.Message}");
+                Console.WriteLine("Creating new data file...");
                 return new AppData();
             }
         }
@@ -55,14 +55,11 @@ namespace daily_task_manager_cs.Managers
         {
             try
             {
-                // In a full implementation, you would serialize to JSON
-                // For this example, we'll use a simple serialization approach
+                // Serialize to JSON
                 string jsonData = SerializeToJson(data);
 
                 // Write to file with UTF-8 encoding
                 File.WriteAllText(DataFilePath, jsonData, Encoding.UTF8);
-
-                ConsoleHelper.DisplaySuccess("Data saved successfully.");
             }
             catch (Exception ex)
             {
@@ -71,41 +68,41 @@ namespace daily_task_manager_cs.Managers
         }
 
         /// <summary>
-        /// Simple JSON parser for the application data structure
+        /// Parses JSON data into AppData object
         /// </summary>
         /// <param name="jsonData">JSON string to parse</param>
         /// <returns>Parsed AppData object</returns>
         private AppData ParseJsonData(string jsonData)
         {
-            // This is a simplified parser for the example
-            // In a real application, use Newtonsoft.Json or System.Text.Json
-
             AppData data = new AppData();
 
             // Check if JSON is empty or invalid
-            if (string.IsNullOrWhiteSpace(jsonData) || !jsonData.Contains("\"users\""))
+            if (string.IsNullOrWhiteSpace(jsonData))
             {
                 return data;
             }
 
             try
             {
-                // Extract users array
-                int usersStart = jsonData.IndexOf("\"users\":") + 8;
+                // Simple JSON parsing for C# 4.7.2 without external libraries
+                // This implementation handles the specific structure we need
+                if (!jsonData.Contains("\"users\""))
+                {
+                    return data;
+                }
+
+                int usersStart = jsonData.IndexOf("\"users\":[") + 9;
                 int usersEnd = jsonData.LastIndexOf("]");
 
-                if (usersStart >= 8 && usersEnd > usersStart)
+                if (usersStart >= 9 && usersEnd > usersStart)
                 {
-                    string usersJson = jsonData.Substring(usersStart, usersEnd - usersStart + 1);
-
-                    // Parse users (simplified - would be more complex in real implementation)
-                    // For this example, we'll return empty data
-                    // In production, use: JsonConvert.DeserializeObject<AppData>(jsonData)
+                    string usersArray = jsonData.Substring(usersStart, usersEnd - usersStart + 1);
+                    ParseUsers(data, usersArray);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // If parsing fails, return empty data
+                ConsoleHelper.DisplayError($"Error parsing JSON data: {ex.Message}");
                 return new AppData();
             }
 
@@ -113,15 +110,204 @@ namespace daily_task_manager_cs.Managers
         }
 
         /// <summary>
-        /// Simple JSON serializer for the application data structure
+        /// Parses users from JSON array
+        /// </summary>
+        /// <param name="data">AppData object to populate</param>
+        /// <param name="usersArray">JSON array string of users</param>
+        private void ParseUsers(AppData data, string usersArray)
+        {
+            int currentPos = 0;
+
+            while (currentPos < usersArray.Length)
+            {
+                // Find start of user object
+                int userStart = usersArray.IndexOf('{', currentPos);
+                if (userStart == -1) break;
+
+                int userEnd = usersArray.IndexOf('}', userStart);
+                if (userEnd == -1) break;
+
+                string userJson = usersArray.Substring(userStart, userEnd - userStart + 1);
+                User user = ParseUser(userJson);
+
+                if (user != null)
+                {
+                    data.Users.Add(user);
+                }
+
+                currentPos = userEnd + 1;
+            }
+        }
+
+        /// <summary>
+        /// Parses a single user from JSON
+        /// </summary>
+        /// <param name="userJson">JSON string of a single user</param>
+        /// <returns>Parsed User object</returns>
+        private User ParseUser(string userJson)
+        {
+            try
+            {
+                string username = ExtractJsonValue(userJson, "username");
+                string passwordHash = ExtractJsonValue(userJson, "passwordHash");
+
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(passwordHash))
+                {
+                    return null;
+                }
+
+                User user = new User(username, passwordHash);
+
+                // Parse tasks
+                int tasksStart = userJson.IndexOf("\"tasks\":[");
+                if (tasksStart != -1)
+                {
+                    tasksStart += 9;
+                    int tasksEnd = userJson.LastIndexOf("]");
+
+                    if (tasksEnd > tasksStart)
+                    {
+                        string tasksArray = userJson.Substring(tasksStart, tasksEnd - tasksStart + 1);
+                        ParseTasks(user, tasksArray);
+                    }
+                }
+
+                return user;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Parses tasks from JSON array
+        /// </summary>
+        /// <param name="user">User object to add tasks to</param>
+        /// <param name="tasksArray">JSON array string of tasks</param>
+        private void ParseTasks(User user, string tasksArray)
+        {
+            int currentPos = 0;
+
+            while (currentPos < tasksArray.Length)
+            {
+                // Find start of task object
+                int taskStart = tasksArray.IndexOf('{', currentPos);
+                if (taskStart == -1) break;
+
+                int taskEnd = tasksArray.IndexOf('}', taskStart);
+                if (taskEnd == -1) break;
+
+                string taskJson = tasksArray.Substring(taskStart, taskEnd - taskStart + 1);
+                TaskItem task = ParseTask(taskJson);
+
+                if (task != null)
+                {
+                    user.Tasks.Add(task);
+                }
+
+                currentPos = taskEnd + 1;
+            }
+        }
+
+        /// <summary>
+        /// Parses a single task from JSON
+        /// </summary>
+        /// <param name="taskJson">JSON string of a single task</param>
+        /// <returns>Parsed TaskItem object</returns>
+        private TaskItem ParseTask(string taskJson)
+        {
+            try
+            {
+                string idStr = ExtractJsonValue(taskJson, "id");
+                string title = ExtractJsonValue(taskJson, "title");
+                string dueDateStr = ExtractJsonValue(taskJson, "dueDate");
+                string priorityStr = ExtractJsonValue(taskJson, "priority");
+                string isCompleteStr = ExtractJsonValue(taskJson, "isComplete");
+
+                if (!int.TryParse(idStr, out int id))
+                {
+                    return null;
+                }
+
+                TaskItem task = new TaskItem();
+                task.Id = id;
+                task.Title = title ?? "";
+
+                // Parse due date
+                if (dueDateStr != "null" && !string.IsNullOrEmpty(dueDateStr))
+                {
+                    if (DateTime.TryParse(dueDateStr.Trim('"'), out DateTime dueDate))
+                    {
+                        task.DueDate = dueDate;
+                    }
+                }
+
+                // Parse priority
+                if (!string.IsNullOrEmpty(priorityStr))
+                {
+                    priorityStr = priorityStr.Trim('"');
+                    if (Enum.TryParse<Priority>(priorityStr, true, out Priority priority))
+                    {
+                        task.Priority = priority;
+                    }
+                }
+
+                // Parse completion status
+                if (!string.IsNullOrEmpty(isCompleteStr))
+                {
+                    task.IsComplete = isCompleteStr.ToLower() == "true";
+                }
+
+                return task;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Extracts a value from JSON string by key
+        /// </summary>
+        /// <param name="json">JSON string</param>
+        /// <param name="key">Key to extract value for</param>
+        /// <returns>Extracted value or empty string if not found</returns>
+        private string ExtractJsonValue(string json, string key)
+        {
+            string searchKey = $"\"{key}\":";
+            int keyPos = json.IndexOf(searchKey);
+
+            if (keyPos == -1) return "";
+
+            int valueStart = keyPos + searchKey.Length;
+            int valueEnd = json.IndexOf(',', valueStart);
+
+            if (valueEnd == -1)
+            {
+                valueEnd = json.IndexOf('}', valueStart);
+            }
+
+            if (valueEnd == -1) return "";
+
+            string value = json.Substring(valueStart, valueEnd - valueStart).Trim();
+
+            // Remove quotes if present
+            if (value.StartsWith("\"") && value.EndsWith("\""))
+            {
+                value = value.Substring(1, value.Length - 2);
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Serializes AppData object to JSON string
         /// </summary>
         /// <param name="data">AppData object to serialize</param>
         /// <returns>JSON string</returns>
         private string SerializeToJson(AppData data)
         {
-            // This is a simplified serializer for the example
-            // In a real application, use Newtonsoft.Json or System.Text.Json
-
             StringBuilder json = new StringBuilder();
             json.AppendLine("{");
             json.AppendLine("  \"users\": [");

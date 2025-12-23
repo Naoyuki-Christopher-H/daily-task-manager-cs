@@ -27,11 +27,6 @@ namespace daily_task_manager_cs
         private static AuthenticationManager authManager;
 
         /// <summary>
-        /// Flag to track if welcome art has been shown
-        /// </summary>
-        private static bool welcomeArtShown = false;
-
-        /// <summary>
         /// Main entry point of the application
         /// </summary>
         /// <param name="args">Command line arguments</param>
@@ -57,13 +52,6 @@ namespace daily_task_manager_cs
             jsonDataManager = new JsonDataManager();
             appData = jsonDataManager.LoadData();
             authManager = new AuthenticationManager(appData, jsonDataManager);
-
-            // Show welcome art on first run if no users exist
-            if (!authManager.HasUsers() && !welcomeArtShown)
-            {
-                ConsoleHelper.DisplayWelcomeArt();
-                welcomeArtShown = true;
-            }
         }
 
         /// <summary>
@@ -72,6 +60,16 @@ namespace daily_task_manager_cs
         private static void RunApplication()
         {
             bool running = true;
+
+            // Show welcome ASCII art if no users exist (first run)
+            if (!authManager.HasUsers())
+            {
+                ConsoleHelper.DisplayWelcomeArt();
+                Console.WriteLine("Welcome to Daily Task Manager! This appears to be your first time.");
+                Console.WriteLine("Please create an account to get started.\n");
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+            }
 
             while (running)
             {

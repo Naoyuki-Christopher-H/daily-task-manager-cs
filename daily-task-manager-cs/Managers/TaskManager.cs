@@ -13,26 +13,26 @@ namespace daily_task_manager_cs.Managers
     public class TaskManager
     {
         /// <summary>
-        /// Currently logged in user
+        /// Currently logged in user.
         /// </summary>
         private User currentUser;
 
         /// <summary>
-        /// JSON data manager for persistence
+        /// JSON data manager for persistence.
         /// </summary>
         private JsonDataManager jsonDataManager;
 
         /// <summary>
-        /// Application data reference
+        /// Application data reference.
         /// </summary>
         private AppData appData;
 
         /// <summary>
-        /// Constructor
+        /// Constructor for TaskManager.
         /// </summary>
-        /// <param name="user">Current user</param>
-        /// <param name="dataManager">JSON data manager</param>
-        /// <param name="data">Application data</param>
+        /// <param name="user">Current user object.</param>
+        /// <param name="dataManager">JSON data manager instance.</param>
+        /// <param name="data">Application data container.</param>
         public TaskManager(User user, JsonDataManager dataManager, AppData data)
         {
             currentUser = user;
@@ -41,7 +41,7 @@ namespace daily_task_manager_cs.Managers
         }
 
         /// <summary>
-        /// Displays the main task management menu
+        /// Displays the main task management menu and handles user input.
         /// </summary>
         public void ShowTaskMenu()
         {
@@ -49,8 +49,9 @@ namespace daily_task_manager_cs.Managers
             {
                 Console.Clear();
                 Console.WriteLine("===================================");
-                Console.WriteLine("TASK MANAGER");
-                Console.WriteLine($"Welcome, {currentUser.Username}!");
+                Console.WriteLine("DAILY TASK MANAGER");
+                Console.WriteLine("Welcome, " + currentUser.Username + "!");
+                Console.WriteLine("Today's Date: " + DateTime.Today.ToString("yyyy-MM-dd"));
                 Console.WriteLine("===================================");
                 Console.WriteLine("1. Add a new task");
                 Console.WriteLine("2. Remove a task");
@@ -58,11 +59,18 @@ namespace daily_task_manager_cs.Managers
                 Console.WriteLine("4. List all tasks");
                 Console.WriteLine("5. Edit a task");
                 Console.WriteLine("6. Search tasks");
-                Console.WriteLine("7. Logout");
-                Console.WriteLine("8. Exit application");
-                Console.Write("\nEnter your choice (1-8): ");
+                Console.WriteLine("7. View overdue tasks");
+                Console.WriteLine("8. View today's tasks");
+                Console.WriteLine("9. Logout");
+                Console.WriteLine("10. Exit application");
+                Console.Write("\nEnter your choice (1-10): ");
 
-                string choice = Console.ReadLine()?.Trim();
+                string choice = Console.ReadLine();
+                if (choice == null)
+                {
+                    choice = string.Empty;
+                }
+                choice = choice.Trim();
 
                 switch (choice)
                 {
@@ -85,8 +93,14 @@ namespace daily_task_manager_cs.Managers
                         SearchTasks();
                         break;
                     case "7":
-                        return; // Logout
+                        ShowOverdueTasks();
+                        break;
                     case "8":
+                        ShowTodaysTasks();
+                        break;
+                    case "9":
+                        return; // Logout
+                    case "10":
                         ExitApplication();
                         break;
                     default:
@@ -99,13 +113,14 @@ namespace daily_task_manager_cs.Managers
         }
 
         /// <summary>
-        /// Adds a new task for the current user
+        /// Adds a new task for the current user.
         /// </summary>
         private void AddTask()
         {
             Console.Clear();
             Console.WriteLine("===================================");
             Console.WriteLine("ADD NEW TASK");
+            Console.WriteLine("Today's Date: " + DateTime.Today.ToString("yyyy-MM-dd"));
             Console.WriteLine("===================================\n");
 
             // Get task title
@@ -114,13 +129,27 @@ namespace daily_task_manager_cs.Managers
             // Get due date (optional)
             DateTime? dueDate = ConsoleHelper.GetDateInput("Enter due date (YYYY-MM-DD) OR press Enter to skip: ");
 
+            // Validate due date is not in the past
+            if (dueDate.HasValue)
+            {
+                if (dueDate.Value.Date < DateTime.Today)
+                {
+                    ConsoleHelper.DisplayError("Due date cannot be in the past. Please enter today's date or a future date.");
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    return;
+                }
+            }
+
             // Get priority
             Priority priority = ConsoleHelper.GetPriorityInput();
 
             // Generate new task ID
-            int newId = currentUser.Tasks.Count > 0
-                ? currentUser.Tasks.Max(t => t.Id) + 1
-                : 1;
+            int newId = 1;
+            if (currentUser.Tasks.Count > 0)
+            {
+                newId = currentUser.Tasks.Max(t => t.Id) + 1;
+            }
 
             // Create new task
             TaskItem newTask = new TaskItem(newId, title, dueDate, priority);
@@ -131,17 +160,17 @@ namespace daily_task_manager_cs.Managers
             // Save to JSON
             jsonDataManager.SaveData(appData);
 
-            ConsoleHelper.DisplaySuccess($"Task added successfully! (ID: {newId})");
+            ConsoleHelper.DisplaySuccess("Task added successfully! (ID: " + newId + ")");
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey();
         }
 
         /// <summary>
-        /// Removes a task by ID
+        /// Removes a task by ID.
         /// </summary>
         private void RemoveTask()
         {
-            if (!currentUser.Tasks.Any())
+            if (currentUser.Tasks.Count == 0)
             {
                 ConsoleHelper.DisplayInfo("No tasks available to remove.");
                 Console.WriteLine("Press any key to continue...");
@@ -161,13 +190,13 @@ namespace daily_task_manager_cs.Managers
 
             if (taskToRemove == null)
             {
-                ConsoleHelper.DisplayError($"Task with ID {taskId} not found.");
+                ConsoleHelper.DisplayError("Task with ID " + taskId + " not found.");
             }
             else
             {
                 currentUser.Tasks.Remove(taskToRemove);
                 jsonDataManager.SaveData(appData);
-                ConsoleHelper.DisplaySuccess($"Task removed successfully! (ID: {taskId})");
+                ConsoleHelper.DisplaySuccess("Task removed successfully! (ID: " + taskId + ")");
             }
 
             Console.WriteLine("Press any key to continue...");
@@ -175,11 +204,11 @@ namespace daily_task_manager_cs.Managers
         }
 
         /// <summary>
-        /// Marks a task as complete by ID
+        /// Marks a task as complete by ID.
         /// </summary>
         private void MarkTaskComplete()
         {
-            if (!currentUser.Tasks.Any())
+            if (currentUser.Tasks.Count == 0)
             {
                 ConsoleHelper.DisplayInfo("No tasks available.");
                 Console.WriteLine("Press any key to continue...");
@@ -199,17 +228,17 @@ namespace daily_task_manager_cs.Managers
 
             if (taskToComplete == null)
             {
-                ConsoleHelper.DisplayError($"Task with ID {taskId} not found.");
+                ConsoleHelper.DisplayError("Task with ID " + taskId + " not found.");
             }
             else if (taskToComplete.IsComplete)
             {
-                ConsoleHelper.DisplayInfo($"Task with ID {taskId} is already complete.");
+                ConsoleHelper.DisplayInfo("Task with ID " + taskId + " is already complete.");
             }
             else
             {
                 taskToComplete.IsComplete = true;
                 jsonDataManager.SaveData(appData);
-                ConsoleHelper.DisplaySuccess($"Task marked as complete! (ID: {taskId})");
+                ConsoleHelper.DisplaySuccess("Task marked as complete! (ID: " + taskId + ")");
             }
 
             Console.WriteLine("Press any key to continue...");
@@ -217,11 +246,11 @@ namespace daily_task_manager_cs.Managers
         }
 
         /// <summary>
-        /// Lists all tasks with sorting and filtering options
+        /// Lists all tasks with sorting and filtering options.
         /// </summary>
         private void ListTasks()
         {
-            if (!currentUser.Tasks.Any())
+            if (currentUser.Tasks.Count == 0)
             {
                 ConsoleHelper.DisplayInfo("No tasks available.");
                 Console.WriteLine("Press any key to continue...");
@@ -230,36 +259,55 @@ namespace daily_task_manager_cs.Managers
             }
 
             Console.Clear();
-            Console.WriteLine("=== ALL TASKS ===\n");
+            Console.WriteLine("===================================");
+            Console.WriteLine("ALL TASKS");
+            Console.WriteLine("Today's Date: " + DateTime.Today.ToString("yyyy-MM-dd"));
+            Console.WriteLine("===================================\n");
 
-            // Sort tasks: incomplete first, then by priority (High to Low), then by due date
+            // Sort tasks: incomplete first, then by due date (closest first), then by priority
             var sortedTasks = currentUser.Tasks
                 .OrderBy(t => t.IsComplete) // false (0) comes before true (1)
+                .ThenBy(t => t.DueDate ?? DateTime.MaxValue) // Null dates last
                 .ThenByDescending(t => t.Priority) // High (2), Medium (1), Low (0)
-                .ThenBy(t => t.DueDate ?? DateTime.MaxValue); // Null dates last
+                .ToList();
 
             int taskCount = 1;
             foreach (var task in sortedTasks)
             {
-                // Color coding based on priority and completion
+                // Color coding based on status
                 if (task.IsComplete)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                 }
+                else if (task.DueDate.HasValue && task.DueDate.Value.Date < DateTime.Today)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red; // Overdue
+                }
+                else if (task.DueDate.HasValue && task.DueDate.Value.Date == DateTime.Today)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow; // Due today
+                }
                 else if (task.Priority == Priority.High)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.ForegroundColor = ConsoleColor.Magenta; // High priority
                 }
                 else if (task.Priority == Priority.Medium)
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.ForegroundColor = ConsoleColor.Cyan; // Medium priority
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.ForegroundColor = ConsoleColor.Green; // Low priority
                 }
 
-                Console.WriteLine($"{taskCount}. {task}");
+                // Add indicator for today's tasks
+                string todayIndicator = "";
+                if (task.DueDate.HasValue && task.DueDate.Value.Date == DateTime.Today)
+                {
+                    todayIndicator = " [TODAY]";
+                }
+
+                Console.WriteLine(taskCount + ". " + task.ToString() + todayIndicator);
                 taskCount++;
             }
 
@@ -269,24 +317,44 @@ namespace daily_task_manager_cs.Managers
             int totalTasks = currentUser.Tasks.Count;
             int completedTasks = currentUser.Tasks.Count(t => t.IsComplete);
             int pendingTasks = totalTasks - completedTasks;
+            int overdueTasks = currentUser.Tasks.Count(t => !t.IsComplete &&
+                                                          t.DueDate.HasValue &&
+                                                          t.DueDate.Value.Date < DateTime.Today);
+            int todayTasks = currentUser.Tasks.Count(t => !t.IsComplete &&
+                                                         t.DueDate.HasValue &&
+                                                         t.DueDate.Value.Date == DateTime.Today);
 
             Console.WriteLine("\n===================================");
-            Console.WriteLine($"STATISTICS");
+            Console.WriteLine("STATISTICS");
             Console.WriteLine("===================================");
-            Console.WriteLine($"Total tasks: {totalTasks}");
-            Console.WriteLine($"Completed: {completedTasks}");
-            Console.WriteLine($"Pending: {pendingTasks}");
+            Console.WriteLine("Total tasks: " + totalTasks);
+            Console.WriteLine("Completed: " + completedTasks);
+            Console.WriteLine("Pending: " + pendingTasks);
+
+            if (overdueTasks > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Overdue: " + overdueTasks);
+                Console.ResetColor();
+            }
+
+            if (todayTasks > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Due today: " + todayTasks);
+                Console.ResetColor();
+            }
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
         }
 
         /// <summary>
-        /// Lists tasks in a simple format without colors or statistics
+        /// Lists tasks in a simple format without colors or statistics.
         /// </summary>
         private void ListTasksSimple()
         {
-            if (!currentUser.Tasks.Any())
+            if (currentUser.Tasks.Count == 0)
             {
                 Console.WriteLine("No tasks available.");
                 return;
@@ -295,16 +363,16 @@ namespace daily_task_manager_cs.Managers
             Console.WriteLine("Your tasks:");
             foreach (var task in currentUser.Tasks.OrderBy(t => t.Id))
             {
-                Console.WriteLine($"  {task}");
+                Console.WriteLine("  " + task.ToString());
             }
         }
 
         /// <summary>
-        /// Edits an existing task
+        /// Edits an existing task.
         /// </summary>
         private void EditTask()
         {
-            if (!currentUser.Tasks.Any())
+            if (currentUser.Tasks.Count == 0)
             {
                 ConsoleHelper.DisplayInfo("No tasks available to edit.");
                 Console.WriteLine("Press any key to continue...");
@@ -324,35 +392,50 @@ namespace daily_task_manager_cs.Managers
 
             if (taskToEdit == null)
             {
-                ConsoleHelper.DisplayError($"Task with ID {taskId} not found.");
+                ConsoleHelper.DisplayError("Task with ID " + taskId + " not found.");
                 Console.WriteLine("Press any key to continue...");
                 Console.ReadKey();
                 return;
             }
 
-            Console.WriteLine($"\nEditing Task ID {taskId}: {taskToEdit.Title}");
+            Console.WriteLine("\nEditing Task ID " + taskId + ": " + taskToEdit.Title);
             Console.WriteLine("Leave fields blank to keep current values.\n");
 
             // Edit title
-            string newTitle = ConsoleHelper.GetStringInput($"Title [{taskToEdit.Title}]: ", true);
+            string newTitle = ConsoleHelper.GetStringInput("Title [" + taskToEdit.Title + "]: ", true);
             if (!string.IsNullOrWhiteSpace(newTitle))
             {
                 taskToEdit.Title = newTitle;
             }
 
             // Edit due date
-            Console.WriteLine($"Current due date: {(taskToEdit.DueDate.HasValue ? taskToEdit.DueDate.Value.ToString("yyyy-MM-dd") : "None")}");
-            DateTime? newDueDate = ConsoleHelper.GetDateInput("New due date (yyyy-MM-dd) or press Enter to keep/set to none: ");
-            taskToEdit.DueDate = newDueDate;
+            Console.WriteLine("Current due date: " + (taskToEdit.DueDate.HasValue ? taskToEdit.DueDate.Value.ToString("yyyy-MM-dd") : "None"));
+            DateTime? newDueDate = ConsoleHelper.GetDateInput("New due date (yyyy-MM-dd) or press Enter to keep/set to none: ", true);
+
+            // Validate new due date if provided
+            if (newDueDate.HasValue && newDueDate.Value.Date < DateTime.Today)
+            {
+                ConsoleHelper.DisplayError("Due date cannot be in the past. Keeping current due date.");
+            }
+            else if (newDueDate.HasValue || string.IsNullOrEmpty(newDueDate.ToString()))
+            {
+                // Only update if a new value was provided (even if empty)
+                taskToEdit.DueDate = newDueDate;
+            }
 
             // Edit priority
-            Console.WriteLine($"Current priority: {taskToEdit.Priority}");
+            Console.WriteLine("Current priority: " + taskToEdit.Priority);
             Console.WriteLine("Select new priority:");
             Console.WriteLine("1. High");
             Console.WriteLine("2. Medium");
             Console.WriteLine("3. Low");
             Console.Write("Choice (1-3, press Enter to keep current): ");
-            string priorityChoice = Console.ReadLine()?.Trim();
+            string priorityChoice = Console.ReadLine();
+            if (priorityChoice == null)
+            {
+                priorityChoice = string.Empty;
+            }
+            priorityChoice = priorityChoice.Trim();
 
             if (!string.IsNullOrWhiteSpace(priorityChoice))
             {
@@ -373,17 +456,17 @@ namespace daily_task_manager_cs.Managers
             // Save changes
             jsonDataManager.SaveData(appData);
 
-            ConsoleHelper.DisplaySuccess($"Task updated successfully! (ID: {taskId})");
+            ConsoleHelper.DisplaySuccess("Task updated successfully! (ID: " + taskId + ")");
             Console.WriteLine("Press any key to continue...");
             Console.ReadKey();
         }
 
         /// <summary>
-        /// Searches tasks by title
+        /// Searches tasks by title.
         /// </summary>
         private void SearchTasks()
         {
-            if (!currentUser.Tasks.Any())
+            if (currentUser.Tasks.Count == 0)
             {
                 ConsoleHelper.DisplayInfo("No tasks available to search.");
                 Console.WriteLine("Press any key to continue...");
@@ -411,18 +494,37 @@ namespace daily_task_manager_cs.Managers
                 .ThenBy(t => t.DueDate ?? DateTime.MaxValue)
                 .ToList();
 
-            if (!searchResults.Any())
+            if (searchResults.Count == 0)
             {
-                ConsoleHelper.DisplayInfo($"No tasks found containing '{searchTerm}'.");
+                ConsoleHelper.DisplayInfo("No tasks found containing '" + searchTerm + "'.");
             }
             else
             {
-                Console.WriteLine($"\nFound {searchResults.Count} task(s) containing '{searchTerm}':\n");
+                Console.WriteLine("\nFound " + searchResults.Count + " task(s) containing '" + searchTerm + "':\n");
 
                 int resultCount = 1;
                 foreach (var task in searchResults)
                 {
-                    Console.WriteLine($"{resultCount}. {task}");
+                    // Color coding for search results
+                    if (task.IsComplete)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                    }
+                    else if (task.DueDate.HasValue && task.DueDate.Value.Date < DateTime.Today)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
+                    else if (task.DueDate.HasValue && task.DueDate.Value.Date == DateTime.Today)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                    }
+                    else if (task.Priority == Priority.High)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Magenta;
+                    }
+
+                    Console.WriteLine(resultCount + ". " + task.ToString());
+                    Console.ResetColor();
                     resultCount++;
                 }
             }
@@ -432,13 +534,100 @@ namespace daily_task_manager_cs.Managers
         }
 
         /// <summary>
-        /// Exits the application with confirmation
+        /// Shows tasks that are overdue (due date before today and not completed).
+        /// </summary>
+        private void ShowOverdueTasks()
+        {
+            var overdueTasks = currentUser.Tasks
+                .Where(t => !t.IsComplete &&
+                           t.DueDate.HasValue &&
+                           t.DueDate.Value.Date < DateTime.Today)
+                .OrderBy(t => t.DueDate)
+                .ToList();
+
+            Console.Clear();
+            Console.WriteLine("===================================");
+            Console.WriteLine("OVERDUE TASKS");
+            Console.WriteLine("Today's Date: " + DateTime.Today.ToString("yyyy-MM-dd"));
+            Console.WriteLine("===================================\n");
+
+            if (overdueTasks.Count == 0)
+            {
+                ConsoleHelper.DisplaySuccess("No overdue tasks! You are all caught up.");
+            }
+            else
+            {
+                Console.WriteLine("You have " + overdueTasks.Count + " overdue task(s):\n");
+
+                int taskCount = 1;
+                foreach (var task in overdueTasks)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    int daysOverdue = (DateTime.Today - task.DueDate.Value.Date).Days;
+                    Console.WriteLine(taskCount + ". " + task.ToString() + " (Overdue by " + daysOverdue + " day(s))");
+                    taskCount++;
+                }
+                Console.ResetColor();
+            }
+
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+        }
+
+        /// <summary>
+        /// Shows tasks that are due today (due date equals today's date and not completed).
+        /// </summary>
+        private void ShowTodaysTasks()
+        {
+            var todaysTasks = currentUser.Tasks
+                .Where(t => !t.IsComplete &&
+                           t.DueDate.HasValue &&
+                           t.DueDate.Value.Date == DateTime.Today)
+                .OrderByDescending(t => t.Priority)
+                .ThenBy(t => t.Title)
+                .ToList();
+
+            Console.Clear();
+            Console.WriteLine("===================================");
+            Console.WriteLine("TODAY'S TASKS");
+            Console.WriteLine("Today's Date: " + DateTime.Today.ToString("yyyy-MM-dd"));
+            Console.WriteLine("===================================\n");
+
+            if (todaysTasks.Count == 0)
+            {
+                ConsoleHelper.DisplaySuccess("No tasks due today! You are all caught up.");
+            }
+            else
+            {
+                Console.WriteLine("You have " + todaysTasks.Count + " task(s) due today:\n");
+
+                int taskCount = 1;
+                foreach (var task in todaysTasks)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine(taskCount + ". " + task.ToString());
+                    taskCount++;
+                }
+                Console.ResetColor();
+            }
+
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+        }
+
+        /// <summary>
+        /// Exits the application with confirmation.
         /// </summary>
         private void ExitApplication()
         {
             Console.Clear();
             Console.WriteLine("Are you sure you want to exit? (Y/N): ");
-            string response = Console.ReadLine()?.Trim().ToLower();
+            string response = Console.ReadLine();
+            if (response == null)
+            {
+                response = string.Empty;
+            }
+            response = response.Trim().ToLower();
 
             if (response == "y" || response == "yes")
             {
